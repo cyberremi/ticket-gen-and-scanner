@@ -82,7 +82,7 @@
 
     html5QrCode.start({ facingMode: "environment" }, qrConfig,
       (decodedText) => {
-        console..log("Scanned text:", decodedText);
+        console.log("Scanned text:", decodedText);
         html5QrCode.stop(); // Stop after one scan
         const ticketID = parseTicket(decodedText);
         if (ticketID) {
