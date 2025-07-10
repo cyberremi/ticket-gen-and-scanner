@@ -87,15 +87,16 @@
     document.getElementById('ticketId').innerText = `Ticket ID: ${ticketID}`;
     document.getElementById('ticketTypeDisplay').innerText = `Ticket Type: ${ticketType}`;
 
-    const qrData = `Name: ${name}\nEmail: ${email}\nTicket ID: ${ticketID}\nType: ${ticketType}`;
-    new QRCode(document.getElementById("qrcode"), {
-      text: qrData,
-      width: 150,
-      height: 150,
-      colorDark: "#000000",
-      colorLight: "#ffffff",
-      correctLevel: QRCode.CorrectLevel.H
-    });
+  const qrData = ticketID;
+new QRCode(document.getElementById("qrcode"), {
+  text: qrData,
+  width: 250,
+  height: 250,
+  colorDark: "#000000",
+  colorLight: "#ffffff",
+  correctLevel: QRCode.CorrectLevel.H
+});
+
 
     function downloadTicket() {
       const ticketDiv = document.getElementById('ticketBox');
