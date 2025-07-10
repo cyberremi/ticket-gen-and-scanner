@@ -84,7 +84,9 @@
       { fps: 10, qrbox: 250 },
       (decodedText, decodedResult) => {
         html5QrCode.stop();
-        processScan(decodedText);
+       console.log("Scanned:", decodedText);
+processScan(decodedText);
+
         setTimeout(() => {
           html5QrCode.start(
             { facingMode: "environment" },
