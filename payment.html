@@ -121,22 +121,24 @@ function toggleMethod() {
     }
   </script>
   <script src="https://js.paystack.co/v1/inline.js"></script>
+<script src="https://js.paystack.co/v1/inline.js"></script>
 <script>
   function payWithPaystack() {
     const name = document.getElementById("name").value.trim();
     const email = document.getElementById("email").value.trim();
     if (!name || !email) return alert("Enter name and email before payment.");
 
-    const amount = parseInt(new URLSearchParams(window.location.search).get("price")) * 100;
-    const ticketType = new URLSearchParams(window.location.search).get("ticketType");
-    const reference = 'WAEVY-' + Math.floor(Math.random() * 1000000000 + 1);
+    const params = new URLSearchParams(window.location.search);
+    const amount = parseInt(params.get("price")) * 100; // in kobo
+    const ticketType = params.get("ticketType");
+    const ticketID = "WAEVY-" + Math.floor(100000 + Math.random() * 900000);
 
     const handler = PaystackPop.setup({
-      key: 'pk_live_dfa8a17c2e1b5a0c597d8794bc4a19ff96281996', // 🔁 Replace with your actual Paystack Public Key
+      key: 'pk_live_dfa8a17c2e1b5a0c597d8794bc4a19ff96281996', // ✅ your live key
       email: email,
       amount: amount,
       currency: "NGN",
-      ref: reference,
+      ref: ticketID, // Use ticketID as the Paystack ref
       metadata: {
         custom_fields: [
           { display_name: "Full Name", variable_name: "full_name", value: name },
@@ -144,27 +146,14 @@ function toggleMethod() {
         ]
       },
       callback: function(response) {
-
-        callback: function(response) {
-  // Replace with real ticket values
-  const name = document.getElementById("name").value;
-  const email = document.getElementById("email").value;
-  const ticketType = "VIP"; // or get from selection
-  const ticketID = "WAEVY-" + Math.floor(100000 + Math.random() * 900000);
-
-  window.location.href = `ticket.html?status=paid&id=${ticketID}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&ticketType=${ticketType}`;
-}
-
-        // Redirect to WhatsApp with confirmation
-       /* const msg = `Hello, I just paid with Paystack.\nName: ${name}\nEmail: ${email}\nTicket: ${ticketType}\nReference: ${response.reference}`;
-        const phone = "2349037443047";
-        window.location.href = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;*/
-        
+        // Redirect user to ticket.html with full data
+        window.location.href = `ticket.html?status=paid&id=${ticketID}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&ticketType=${ticketType}`;
       },
       onClose: function() {
-        alert('Transaction cancelled.');
+        alert("Transaction cancelled.");
       }
     });
+
     handler.openIframe();
   }
 </script>
