@@ -144,10 +144,22 @@ function toggleMethod() {
         ]
       },
       callback: function(response) {
+
+        callback: function(response) {
+  // Replace with real ticket values
+  const name = document.getElementById("name").value;
+  const email = document.getElementById("email").value;
+  const ticketType = "VIP"; // or get from selection
+  const ticketID = "WAEVY-" + Math.floor(100000 + Math.random() * 900000);
+
+  window.location.href = `ticket.html?status=paid&id=${ticketID}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&ticketType=${ticketType}`;
+}
+
         // Redirect to WhatsApp with confirmation
-        const msg = `Hello, I just paid with Paystack.\nName: ${name}\nEmail: ${email}\nTicket: ${ticketType}\nReference: ${response.reference}`;
+       /* const msg = `Hello, I just paid with Paystack.\nName: ${name}\nEmail: ${email}\nTicket: ${ticketType}\nReference: ${response.reference}`;
         const phone = "2349037443047";
-        window.location.href = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+        window.location.href = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;*/
+        
       },
       onClose: function() {
         alert('Transaction cancelled.');
