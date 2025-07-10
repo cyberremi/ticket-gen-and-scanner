@@ -85,7 +85,7 @@
   console.log("🧪 Scanned raw text:", decodedText); // ADD THIS LINE
 
         html5QrCode.stop(); // Stop after one scan
-        const ticketID = parseTicket(decodedText);
+       const ticketID = decodedText.trim();
         if (ticketID) {
           document.getElementById("result").innerText = `Scanning Ticket ID: ${ticketID}...`;
           validateTicket(ticketID);
