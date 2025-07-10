@@ -1,0 +1,102 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ticket Scanner | WAEVY’S POOL PARTY</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f2027;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
+    }
+    #reader {
+      width: 320px;
+      margin: 20px 0;
+    }
+    .result {
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      margin-top: 20px;
+      font-size: 1.1rem;
+    }
+    .valid {
+      background: #00ff88;
+      color: #000;
+    }
+    .used {
+      background: #ff4444;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎟 Ticket Scanner</h1>
+  <div id="reader"></div>
+  <div id="result" class="result"></div>
+
+  <script>
+  const firebaseConfig = {
+  apiKey: "AIzaSyDT1Yp2IIEihkvIerildaCtRwAufqjrBnA",
+  authDomain: "waevy-tickets.firebaseapp.com",
+  projectId: "waevy-tickets",
+  storageBucket: "waevy-tickets.firebasestorage.app",
+  messagingSenderId: "519884012833",
+  appId: "1:519884012833:web:ce6d5dacea91392a2d1260"
+};
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    function processScan(data) {
+      const lines = data.split('\n');
+      const ticketIdLine = lines.find(line => line.includes('Ticket ID:'));
+      if (!ticketIdLine) {
+        document.getElementById('result').innerHTML = 'Invalid QR format.';
+        return;
+      }
+
+      const ticketID = ticketIdLine.split('Ticket ID:')[1].trim();
+
+      db.collection('tickets').doc(ticketID).get().then(doc => {
+        if (!doc.exists) {
+          document.getElementById('result').innerHTML = '<div class="used">❌ Invalid Ticket ID</div>';
+        } else if (doc.data().used) {
+          document.getElementById('result').innerHTML = '<div class="used">🚫 Ticket already used</div>';
+        } else {
+          document.getElementById('result').innerHTML = '<div class="valid">✅ Valid Ticket! Access granted.</div>';
+          db.collection('tickets').doc(ticketID).update({ used: true });
+        }
+      });
+    }
+
+    const html5QrCode = new Html5Qrcode("reader");
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      (decodedText, decodedResult) => {
+        html5QrCode.stop();
+        processScan(decodedText);
+        setTimeout(() => {
+          html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: 250 },
+            (d, r) => {
+              html5QrCode.stop();
+              processScan(d);
+            }
+          );
+        }, 5000);
+      }
+    );
+  </script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Your Ticket | WAEVY'S POOL PARTY</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f2027;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 40px;
+      color: #000;
+    }
+    .ticket {
+      background: linear-gradient(135deg, #00f2fe, #4facfe);
+      color: #000;
+      border-radius: 15px;
+      padding: 25px;
+      width: 360px;
+      text-align: center;
+      box-shadow: 0 0 20px #00f2fe;
+    }
+    .ticket h1 {
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+    }
+    .ticket p {
+      font-size: 0.95rem;
+      margin: 4px 0;
+    }
+    #qrcode {
+      margin: 20px auto;
+    }
+    .ticket-id {
+      font-weight: bold;
+      margin-top: 10px;
+      color: #0000cc;
+    }
+    .download-btn {
+      background: #000;
+      color: #fff;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="ticket" id="ticketBox">
+    <h1>WAEVY’S POOL PARTY 🎉</h1>
+    <p id="ticketName"></p>
+    <p id="ticketEmail"></p>
+    <p id="ticketTypeDisplay"></p>
+    <p>📍 Location: [Your Venue]</p>
+    <p>📅 August 31st, 2025</p>
+    <p>⏰ 12 PM – 12 AM</p>
+    <div id="qrcode"></div>
+    <p class="ticket-id" id="ticketId"></p>
+    <button class="download-btn" onclick="downloadTicket()">Download Ticket</button>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const name = urlParams.get('name');
+    const email = urlParams.get('email');
+    const ticketID = urlParams.get('id');
+    const status = urlParams.get('status');
+    const ticketType = urlParams.get('ticketType');
+
+    if (status !== "paid") {
+      alert("Payment not confirmed.");
+      window.location.href = "ticket-selection.html";
+    }
+
+    document.getElementById('ticketName').innerText = `Name: ${name}`;
+    document.getElementById('ticketEmail').innerText = `Email: ${email}`;
+    document.getElementById('ticketId').innerText = `Ticket ID: ${ticketID}`;
+    document.getElementById('ticketTypeDisplay').innerText = `Ticket Type: ${ticketType}`;
+
+    const qrData = `Name: ${name}\nEmail: ${email}\nTicket ID: ${ticketID}\nType: ${ticketType}`;
+    new QRCode(document.getElementById("qrcode"), {
+      text: qrData,
+      width: 150,
+      height: 150,
+      colorDark: "#000000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H
+    });
+
+    function downloadTicket() {
+      const ticketDiv = document.getElementById('ticketBox');
+      html2canvas(ticketDiv, { scale: 3 }).then(canvas => {
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL();
+        a.download = `${ticketID}_ticket.png`;
+        a.click();
+      });
+    }
+
+    // Initialize EmailJS
+    emailjs.init("YOUR_EMAILJS_USER_ID");
+    emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
+      name: name,
+      email: email,
+      ticket_type: ticketType,
+      ticket_id: ticketID
+    }).then(() => {
+      console.log("Email sent successfully");
+    }).catch((error) => {
+      console.error("Email error:", error);
+    });
+
+    // Firebase config (replace with your real config)
+   const firebaseConfig = {
+  apiKey: "AIzaSyDT1Yp2IIEihkvIerildaCtRwAufqjrBnA",
+  authDomain: "waevy-tickets.firebaseapp.com",
+  projectId: "waevy-tickets",
+  storageBucket: "waevy-tickets.firebasestorage.app",
+  messagingSenderId: "519884012833",
+  appId: "1:519884012833:web:ce6d5dacea91392a2d1260"
+};
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Save ticket to Firestore to prevent reuse
+    db.collection("tickets").doc(ticketID).set({
+      name: name,
+      email: email,
+      ticketType: ticketType,
+      used: false,
+      createdAt: new Date().toISOString()
+    });
+  </script>
+</body>
+</html>

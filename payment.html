@@ -1,0 +1,161 @@
+<!-- 2. payment.html (Updated with OPay + Bank Transfer) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Payment | WAEVY'S POOL PARTY</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #121212;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
+    }
+    .payment-box {
+      background: #1e1e2f;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 0 15px rgba(0, 242, 254, 0.3);
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: none;
+      font-size: 1rem;
+    }
+    button {
+      background: #00f2fe;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .section {
+      margin-top: 20px;
+      padding: 15px;
+      background: #2c2c3d;
+      border-radius: 10px;
+      display: none;
+    }
+    .section p {
+      font-size: 0.9rem;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div class="payment-box">
+    <h2>Complete Payment</h2>
+    <p id="ticketInfo"></p>
+    <input type="text" id="name" placeholder="Your Name">
+    <input type="email" id="email" placeholder="Your Email">
+
+   <select id="method" onchange="toggleMethod()">
+  <option value="">Select Payment Method</option>
+  <option value="opay">OPay</option>
+  <option value="bank">Bank Transfer</option>
+  <option value="paystack">Paystack</option> <!-- 👈 New option -->
+</select>
+
+
+    <!-- OPay Payment -->
+    <div id="opaySection" class="section">
+      <p>Click the button below to proceed to OPay Payment:</p>
+      <button onclick="payWithOpay()">Pay with OPay</button>
+    </div>
+
+    <!-- Bank Transfer -->
+    <div id="bankSection" class="section">
+      <p><strong>Transfer ₦<span id="nairaAmount">0</span> to:</strong><br>
+         Bank: GTBank<br>
+         Account Name: Waevy Events<br>
+         Account Number: 0123456789</p>
+      <p>After payment, click the button below to confirm via WhatsApp:</p>
+      <button onclick="redirectToWhatsApp()">Confirm & Get Ticket</button>
+    </div>
+    <!-- Paystack Payment -->
+<div id="paystackSection" class="section">
+  <p>Click the button below to pay securely with Paystack:</p>
+  <button onclick="payWithPaystack()">Pay with Paystack</button>
+</div>
+
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const ticketType = params.get('ticketType');
+    const price = params.get('price');
+    document.getElementById("ticketInfo").innerText = `Ticket: ${ticketType} - ₦${price}`;
+    document.getElementById("nairaAmount").innerText = parseInt(price); // Estimate ₦
+
+function toggleMethod() {
+  const method = document.getElementById("method").value;
+  document.getElementById("opaySection").style.display = method === "opay" ? "block" : "none";
+  document.getElementById("bankSection").style.display = method === "bank" ? "block" : "none";
+  document.getElementById("paystackSection").style.display = method === "paystack" ? "block" : "none"; // 👈 Added line
+}
+
+
+    function payWithOpay() {
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      if (!name || !email) return alert("Enter name and email before payment.");
+      const ticketID = 'WAEVY-' + Math.floor(100000 + Math.random() * 900000);
+      // Replace with your real OPay payment link
+      window.location.href = `ticket.html?status=paid&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&id=${ticketID}&ticketType=${ticketType}`;
+    }
+
+    function redirectToWhatsApp() {
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const msg = `Hello, I just paid via bank transfer.\nName: ${name}\nEmail: ${email}\nTicket: ${ticketType}`;
+      const phone = "2349037443047"; // Replace with your WhatsApp number
+      window.location.href = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+    }
+  </script>
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+<script>
+  function payWithPaystack() {
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    if (!name || !email) return alert("Enter name and email before payment.");
+
+    const amount = parseInt(new URLSearchParams(window.location.search).get("price")) * 100;
+    const ticketType = new URLSearchParams(window.location.search).get("ticketType");
+    const reference = 'WAEVY-' + Math.floor(Math.random() * 1000000000 + 1);
+
+    const handler = PaystackPop.setup({
+      key: 'pk_live_dfa8a17c2e1b5a0c597d8794bc4a19ff96281996', // 🔁 Replace with your actual Paystack Public Key
+      email: email,
+      amount: amount,
+      currency: "NGN",
+      ref: reference,
+      metadata: {
+        custom_fields: [
+          { display_name: "Full Name", variable_name: "full_name", value: name },
+          { display_name: "Ticket Type", variable_name: "ticket_type", value: ticketType }
+        ]
+      },
+      callback: function(response) {
+        // Redirect to WhatsApp with confirmation
+        const msg = `Hello, I just paid with Paystack.\nName: ${name}\nEmail: ${email}\nTicket: ${ticketType}\nReference: ${response.reference}`;
+        const phone = "2349037443047";
+        window.location.href = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+      },
+      onClose: function() {
+        alert('Transaction cancelled.');
+      }
+    });
+    handler.openIframe();
+  }
+</script>
+
+</body>
+</html>
