@@ -3,100 +3,96 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Ticket Scanner | WAEVY’S POOL PARTY</title>
+  <title>Ticket Scanner | WAEVY</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #0f2027;
-      color: #fff;
+      background: #000;
+      color: #0f0;
+      font-family: monospace;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 40px;
+      justify-content: center;
+      height: 100vh;
     }
     #reader {
-      width: 320px;
-      margin: 20px 0;
+      width: 300px;
     }
-    .result {
-      padding: 20px;
-      border-radius: 10px;
-      text-align: center;
+    #result {
       margin-top: 20px;
       font-size: 1.1rem;
-    }
-    .valid {
-      background: #00ff88;
-      color: #000;
-    }
-    .used {
-      background: #ff4444;
-      color: #fff;
     }
   </style>
 </head>
 <body>
-  <h1>🎟 Ticket Scanner</h1>
+  <h2>🎫 WAEVY TICKET SCANNER</h2>
   <div id="reader"></div>
-  <div id="result" class="result"></div>
+  <div id="result">Scan a QR Code...</div>
 
   <script>
-  const firebaseConfig = {
-  apiKey: "AIzaSyDT1Yp2IIEihkvIerildaCtRwAufqjrBnA",
-  authDomain: "waevy-tickets.firebaseapp.com",
-  projectId: "waevy-tickets",
-  storageBucket: "waevy-tickets.firebasestorage.app",
-  messagingSenderId: "519884012833",
-  appId: "1:519884012833:web:ce6d5dacea91392a2d1260"
-};
+    // TODO: Replace with your actual Firebase config
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    function processScan(data) {
-      const lines = data.split('\n');
-      const ticketIdLine = lines.find(line => line.includes('Ticket ID:'));
-      if (!ticketIdLine) {
-        document.getElementById('result').innerHTML = 'Invalid QR format.';
-        return;
-      }
+    const html5QrCode = new Html5Qrcode("reader");
+    const qrConfig = { fps: 10, qrbox: 250 };
 
-      const ticketID = ticketIdLine.split('Ticket ID:')[1].trim();
+    function parseTicket(text) {
+      const lines = text.split("\n");
+      const ticketIDLine = lines.find(line => line.includes("Ticket ID"));
+      return ticketIDLine ? ticketIDLine.split(":")[1].trim() : null;
+    }
 
-      db.collection('tickets').doc(ticketID).get().then(doc => {
+    function markTicketAsUsed(ticketID) {
+      const ref = db.collection("tickets").doc(ticketID);
+      ref.update({ used: true });
+    }
+
+    function validateTicket(ticketID) {
+      const ref = db.collection("tickets").doc(ticketID);
+      ref.get().then(doc => {
         if (!doc.exists) {
-          document.getElementById('result').innerHTML = '<div class="used">❌ Invalid Ticket ID</div>';
-        } else if (doc.data().used) {
-          document.getElementById('result').innerHTML = '<div class="used">🚫 Ticket already used</div>';
+          document.getElementById("result").innerText = "❌ Invalid Ticket";
         } else {
-          document.getElementById('result').innerHTML = '<div class="valid">✅ Valid Ticket! Access granted.</div>';
-          db.collection('tickets').doc(ticketID).update({ used: true });
+          const data = doc.data();
+          if (data.used === true) {
+            document.getElementById("result").innerText = "🚫 Ticket Already Used";
+          } else {
+            document.getElementById("result").innerText = "✅ Valid Ticket! Access Granted.";
+            markTicketAsUsed(ticketID);
+          }
         }
+      }).catch(err => {
+        console.error(err);
+        document.getElementById("result").innerText = "Error reading ticket.";
       });
     }
 
-    const html5QrCode = new Html5Qrcode("reader");
-    html5QrCode.start(
-      { facingMode: "environment" },
-      { fps: 10, qrbox: 250 },
-      (decodedText, decodedResult) => {
-        html5QrCode.stop();
-       console.log("Scanned:", decodedText);
-processScan(decodedText);
-
-        setTimeout(() => {
-          html5QrCode.start(
-            { facingMode: "environment" },
-            { fps: 10, qrbox: 250 },
-            (d, r) => {
-              html5QrCode.stop();
-              processScan(d);
-            }
-          );
-        }, 5000);
+    html5QrCode.start({ facingMode: "environment" }, qrConfig,
+      (decodedText) => {
+        html5QrCode.stop(); // Stop after one scan
+        const ticketID = parseTicket(decodedText);
+        if (ticketID) {
+          document.getElementById("result").innerText = `Scanning Ticket ID: ${ticketID}...`;
+          validateTicket(ticketID);
+        } else {
+          document.getElementById("result").innerText = "❌ Invalid QR format";
+        }
+      },
+      (errorMessage) => {
+        console.warn("QR Code scan error:", errorMessage);
       }
     );
   </script>
